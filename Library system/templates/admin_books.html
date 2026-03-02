@@ -1,0 +1,128 @@
+{% extends "base.html" %} {% block title %}Manage Books — LibraryOS{% endblock
+%} {% block breadcrumb %}
+<a href="{{ url_for('admin_dashboard') }}" class="bc-link">Dashboard</a>
+<span class="bc-sep">›</span><span class="bc">Books</span>
+{% endblock %} {% block content %}
+<div class="page-content">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">📚 Book Inventory</h2>
+      <p class="page-sub">{{ books|length }} books in the library</p>
+    </div>
+    <a href="{{ url_for('admin_add_book') }}" class="btn-primary"
+      >➕ Add Book</a
+    >
+  </div>
+
+  <!-- Search -->
+  <div class="filter-bar">
+    <form
+      action="{{ url_for('admin_books') }}"
+      method="GET"
+      class="filter-form"
+    >
+      <div class="search-input-wrap">
+        <span class="si-icon">🔍</span>
+        <input
+          type="text"
+          name="q"
+          placeholder="Search books, authors, ISBN…"
+          value="{{ query }}"
+          class="search-input"
+        />
+        {% if query %}
+        <a href="{{ url_for('admin_books') }}" class="clear-x">✕</a>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn-primary">Search</button>
+    </form>
+  </div>
+
+  <!-- Table -->
+  {% if books %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Cover</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>Category</th>
+          <th>ISBN</th>
+          <th>Copies</th>
+          <th>Available</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in books %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            <img
+              src="{{ b.cover_url }}"
+              class="tbl-cover"
+              onerror="this.src='https://placehold.co/40x56/1a1e28/f59e0b?text={{ b.title[:2]|upper }}'"
+            />
+          </td>
+          <td>
+            <div class="cell-title">{{ b.title }}</div>
+            {% if b.year %}<small class="text-muted">{{ b.year }}</small>{%
+            endif %}
+          </td>
+          <td>{{ b.author }}</td>
+          <td>
+            {% if b.category %}
+            <span class="cat-chip">{{ b.category }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td><small>{{ b.isbn or '—' }}</small></td>
+          <td class="text-center">{{ b.total_copies }}</td>
+          <td class="text-center">
+            {% if b.available > 0 %}
+            <span class="badge badge-green">{{ b.available }}</span>
+            {% else %}
+            <span class="badge badge-red">0</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="act-group">
+              <a
+                href="{{ url_for('admin_edit_book', book_id=b.id) }}"
+                class="tbl-act edit-act"
+                >✏️ Edit</a
+              >
+              <a
+                href="{{ url_for('admin_delete_book', book_id=b.id) }}"
+                class="tbl-act del-act"
+                data-title="{{ b.title }}"
+                onclick="
+                  return confirm(
+                    'Delete &quot;' + this.dataset.title + '&quot;?',
+                  );
+                "
+                >🗑 Del</a
+              >
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-box">
+    <span>📚</span>
+    <p>
+      No books found. {% if query %}<a href="{{ url_for('admin_books') }}"
+        >Clear search</a
+      >{% endif %}
+    </p>
+    <a href="{{ url_for('admin_add_book') }}" class="btn-primary btn-sm"
+      >Add First Book</a
+    >
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

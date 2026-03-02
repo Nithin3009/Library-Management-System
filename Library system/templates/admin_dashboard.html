@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard — LibraryOS{% endblock %}
+
+{% block breadcrumb %}<span class="bc">🛡 Admin Dashboard</span>{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <!-- Welcome -->
+  <div class="welcome-banner">
+    <div class="wb-text">
+      <h2>Admin Panel<br><em>{{ session.name }}</em></h2>
+      <p>Library Management Control Centre</p>
+    </div>
+    <div class="wb-actions">
+      <a href="{{ url_for('admin_add_book') }}" class="btn-primary">➕ Add Book</a>
+      <a href="{{ url_for('admin_issued') }}" class="btn-outline">📤 View Issued</a>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row stats-row-6">
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.total_books }}</div>
+        <div class="stat-lbl">Total Copies</div>
+      </div>
+    </div>
+    <div class="stat-card stat-green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.available }}</div>
+        <div class="stat-lbl">Available</div>
+      </div>
+    </div>
+    <div class="stat-card stat-amber">
+      <div class="stat-icon">📤</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.issued_now }}</div>
+        <div class="stat-lbl">Issued Now</div>
+      </div>
+    </div>
+    <div class="stat-card {% if stats.overdue > 0 %}stat-danger{% endif %}">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.overdue }}</div>
+        <div class="stat-lbl">Overdue</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎓</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.total_students }}</div>
+        <div class="stat-lbl">Students</div>
+      </div>
+    </div>
+    <div class="stat-card {% if stats.total_fines > 0 %}stat-amber{% endif %}">
+      <div class="stat-icon">💰</div>
+      <div class="stat-body">
+        <div class="stat-num">₹{{ "%.0f"|format(stats.total_fines) }}</div>
+        <div class="stat-lbl">Pending Fines</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid">
+
+    <!-- Currently Issued table -->
+    <section class="section dash-main">
+      <div class="sec-header">
+        <h3 class="sec-title">📤 Active Issues</h3>
+        <a href="{{ url_for('admin_issued') }}" class="sec-link">View All →</a>
+      </div>
+      {% if issued_records %}
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Book</th><th>Student</th><th>Due Date</th><th>Fine</th><th>Status</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {% for r in issued_records[:8] %}
+            <tr class="{% if r.is_overdue %}row-overdue{% endif %}">
+              <td>
+                <div class="cell-book">
+                  <img src="{{ r.cover_url }}" class="cell-cover"
+                       onerror="this.src='https://placehold.co/32x48/1a1e28/f59e0b?text=BK'"/>
+                  <div>
+                    <div class="cell-title">{{ r.title[:35] }}{% if r.title|length > 35 %}…{% endif %}</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div>{{ r.student_name }}</div>
+                <small class="text-muted">{{ r.roll_no }}</small>
+              </td>
+              <td class="{% if r.is_overdue %}text-red{% endif %}">
+                {{ r.due_date.strftime('%d %b %Y') }}
+                {% if r.is_overdue %}<span class="badge badge-red">Late</span>{% endif %}
+              </td>
+              <td>
+                {% if r.live_fine > 0 %}
+                  <span class="text-red">₹{{ "%.2f"|format(r.live_fine) }}</span>
+                {% else %}—{% endif %}
+              </td>
+              <td><span class="badge badge-amber">Issued</span></td>
+              <td>
+                <a href="{{ url_for('admin_return_book', issue_id=r.id) }}"
+                   class="tbl-act return-act"
+                   onclick="return confirm('Mark as returned?')">↩ Return</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-box"><span>📭</span><p>No active issues.</p></div>
+      {% endif %}
+    </section>
+
+    <!-- Recent Books -->
+    <section class="section dash-side">
+      <div class="sec-header">
+        <h3 class="sec-title">🆕 Recent Books</h3>
+        <a href="{{ url_for('admin_books') }}" class="sec-link">All →</a>
+      </div>
+      <div class="recent-book-list">
+        {% for b in recent_books %}
+        <div class="rb-item">
+          <img src="{{ b.cover_url }}" class="rb-cover"
+               onerror="this.src='https://placehold.co/48x64/1a1e28/f59e0b?text={{ b.title[:2]|upper }}'"/>
+          <div class="rb-info">
+            <div class="rb-title">{{ b.title[:40] }}{% if b.title|length > 40 %}…{% endif %}</div>
+            <div class="rb-author">{{ b.author }}</div>
+            <div class="rb-avail">
+              {% if b.available > 0 %}
+                <span class="badge badge-green">{{ b.available }}/{{ b.total_copies }} avail</span>
+              {% else %}
+                <span class="badge badge-red">All Issued</span>
+              {% endif %}
+            </div>
+          </div>
+          <a href="{{ url_for('admin_edit_book', book_id=b.id) }}" class="rb-edit">✏️</a>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+  </div><!-- dash-grid -->
+</div>
+{% endblock %}

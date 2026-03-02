@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Register — LibraryOS{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="auth-left">
+    <div class="auth-brand">
+      <span class="auth-logo">📖</span>
+      <h1>Library<em>OS</em></h1>
+    </div>
+    <p class="auth-tagline">Join thousands of students<br>managing books smarter.</p>
+    <div class="auth-orb auth-orb1"></div>
+    <div class="auth-orb auth-orb2"></div>
+  </div>
+
+  <div class="auth-right">
+    <div class="auth-card">
+      <h2 class="auth-title">Create Account</h2>
+      <p class="auth-sub">Register as a student</p>
+
+      {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in msgs %}
+        <div class="flash flash-{{ cat }} mb-3"><span>{{ '✅' if cat=='success' else '❌' }}</span> {{ msg }}</div>
+      {% endfor %}
+      {% endwith %}
+
+      <form method="POST" class="auth-form">
+        <div class="form-grid-2">
+          <div class="field">
+            <label>Full Name</label>
+            <input type="text" name="name" placeholder="Bala Kumar" required/>
+          </div>
+          <div class="field">
+            <label>Roll Number</label>
+            <input type="text" name="roll_no" placeholder="CS2025001" required/>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input type="email" name="email" placeholder="you@college.edu" required/>
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" name="phone" placeholder="9876543210"/>
+          </div>
+          <div class="field col-span-2">
+            <label>Department</label>
+            <select name="department" required>
+              <option value="">Select Department</option>
+              {% for d in ['Computer Science','Electronics','Mechanical','Civil','Chemical','Biotechnology','Mathematics','Physics','MBA','MCA'] %}
+              <option value="{{ d }}">{{ d }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" name="password" placeholder="••••••••" required/>
+          </div>
+          <div class="field">
+            <label>Confirm Password</label>
+            <input type="password" id="confirm_pw" placeholder="••••••••" required/>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-btn">Create Account →</button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.querySelector(".auth-form").addEventListener("submit", function(e){
+  const pw  = this.querySelector('[name="password"]').value;
+  const cpw = document.getElementById("confirm_pw").value;
+  if(pw !== cpw){ e.preventDefault(); alert("Passwords do not match!"); }
+});
+</script>
+{% endblock %}

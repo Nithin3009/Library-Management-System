@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Students — LibraryOS{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{{ url_for('admin_dashboard') }}" class="bc-link">Dashboard</a>
+  <span class="bc-sep">›</span><span class="bc">Students</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">🎓 Registered Students</h2>
+      <p class="page-sub">{{ students|length }} students registered</p>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <form action="{{ url_for('admin_students') }}" method="GET" class="filter-form">
+      <div class="search-input-wrap">
+        <span class="si-icon">🔍</span>
+        <input type="text" name="q" value="{{ query }}"
+               placeholder="Search by name, roll no, email…" class="search-input"/>
+        {% if query %}<a href="{{ url_for('admin_students') }}" class="clear-x">✕</a>{% endif %}
+      </div>
+      <button type="submit" class="btn-primary">Search</button>
+    </form>
+  </div>
+
+  {% if students %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr><th>#</th><th>Name</th><th>Roll No</th><th>Department</th>
+            <th>Email</th><th>Active Issues</th><th>Total Returned</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>
+            <div class="cell-student">
+              <div class="stu-avatar">{{ s.name[0].upper() }}</div>
+              <div><strong>{{ s.name }}</strong></div>
+            </div>
+          </td>
+          <td><code>{{ s.roll_no }}</code></td>
+          <td>{{ s.department or '—' }}</td>
+          <td><small>{{ s.email }}</small></td>
+          <td class="text-center">
+            {% if s.active_issues > 0 %}
+              <span class="badge badge-amber">{{ s.active_issues }}</span>
+            {% else %}
+              <span class="text-muted">0</span>
+            {% endif %}
+          </td>
+          <td class="text-center">{{ s.total_returned }}</td>
+          <td>
+            <a href="{{ url_for('admin_student_detail', sid=s.id) }}" class="tbl-act view-act">👁 View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-box"><span>🎓</span><p>No students found.</p></div>
+  {% endif %}
+
+</div>
+{% endblock %}

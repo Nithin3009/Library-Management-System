@@ -1,0 +1,173 @@
+{% extends "base.html" %} {% block title %}Student Dashboard — LibraryOS{%
+endblock %} {% block breadcrumb %}<span class="bc">🏠 Student Dashboard</span>{%
+endblock %} {% block content %}
+<div class="page-content">
+  <!-- Welcome banner -->
+  <div class="welcome-banner">
+    <div class="wb-text">
+      <h2>
+        Good {{ 'Morning' if now().hour < 12 else ('Afternoon' if now().hour <
+        17 else 'Evening') }},<br />
+        <em>{{ session.name }}</em> 👋
+      </h2>
+      <p>{{ student.roll_no }} · {{ student.department }}</p>
+    </div>
+    <a href="{{ url_for('student_books') }}" class="btn-primary"
+      >Browse Books →</a
+    >
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.issued }}</div>
+        <div class="stat-lbl">Currently Issued</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.returned }}</div>
+        <div class="stat-lbl">Books Returned</div>
+      </div>
+    </div>
+    <div class="stat-card {% if stats.overdue > 0 %}stat-danger{% endif %}">
+      <div class="stat-icon">⚠️</div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.overdue }}</div>
+        <div class="stat-lbl">Overdue Books</div>
+      </div>
+    </div>
+    <div class="stat-card {% if stats.total_fine > 0 %}stat-danger{% endif %}">
+      <div class="stat-icon">💰</div>
+      <div class="stat-body">
+        <div class="stat-num">₹{{ "%.2f"|format(stats.total_fine) }}</div>
+        <div class="stat-lbl">Pending Fine</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Currently Issued -->
+  <section class="section">
+    <div class="sec-header">
+      <h3 class="sec-title">📤 Currently Issued Books</h3>
+    </div>
+    {% if issued %}
+    <div class="book-cards">
+      {% for r in issued %}
+      <div class="bcard {% if r.is_overdue %}bcard-overdue{% endif %}">
+        <div class="bcard-img-wrap">
+          <img
+            src="{{ r.cover_url }}"
+            alt="{{ r.title }}"
+            class="bcard-img"
+            onerror="this.src='https://placehold.co/180x260/1a1e28/f59e0b?text={{ r.title[:2]|upper }}'"
+          />
+          {% if r.is_overdue %}
+          <span class="overdue-badge">OVERDUE</span>
+          {% endif %}
+        </div>
+        <div class="bcard-info">
+          <h4 class="bcard-title">{{ r.title }}</h4>
+          <p class="bcard-author">{{ r.author }}</p>
+          <div class="bcard-meta">
+            <span
+              >📅 Issued:
+              <strong>{{ r.issue_date.strftime('%d %b %Y') }}</strong></span
+            >
+            <span class="{% if r.is_overdue %}text-red{% endif %}">
+              ⏰ Due: <strong>{{ r.due_date.strftime('%d %b %Y') }}</strong>
+            </span>
+            {% if r.live_fine > 0 %}
+            <span class="text-red"
+              >💰 Fine: <strong>₹{{ "%.2f"|format(r.live_fine) }}</strong></span
+            >
+            {% endif %}
+          </div>
+          <a
+            href="{{ url_for('return_book', issue_id=r.id) }}"
+            class="btn-return"
+            data-title="{{ r.title }}"
+            data-fine="{{ r.live_fine }}"
+            onclick="return confirmReturn(this);"
+          >
+            ↩ Return Book
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-box">
+      <span>📭</span>
+      <p>No books currently issued.</p>
+      <a href="{{ url_for('student_books') }}" class="btn-primary btn-sm"
+        >Browse Books</a
+      >
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Return History -->
+  <section class="section">
+    <div class="sec-header">
+      <h3 class="sec-title">📋 Return History</h3>
+    </div>
+    {% if history %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Book</th>
+            <th>Author</th>
+            <th>Issued</th>
+            <th>Returned</th>
+            <th>Fine</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in history %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><strong>{{ r.title }}</strong></td>
+            <td>{{ r.author }}</td>
+            <td>{{ r.issue_date.strftime('%d %b %Y') }}</td>
+            <td>
+              {{ r.return_date.strftime('%d %b %Y') if r.return_date else '—' }}
+            </td>
+            <td>
+              {% if r.fine and r.fine > 0 %}
+              <span class="badge badge-red">₹{{ "%.2f"|format(r.fine) }}</span>
+              {% else %}
+              <span class="badge badge-green">None</span>
+              {% endif %}
+            </td>
+            <td><span class="badge badge-green">Returned</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-box">
+      <span>📂</span>
+      <p>No return history yet.</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function confirmReturn(el) {
+    var title = el.getAttribute("data-title");
+    var fine = parseFloat(el.getAttribute("data-fine"));
+    var msg = 'Return "' + title + '"?';
+    if (fine > 0) msg += "\nLate fine: ₹" + fine.toFixed(2);
+    return confirm(msg);
+  }
+</script>
+{% endblock %}

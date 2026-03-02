@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Book — LibraryOS{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{{ url_for('admin_dashboard') }}" class="bc-link">Dashboard</a>
+  <span class="bc-sep">›</span>
+  <a href="{{ url_for('admin_books') }}" class="bc-link">Books</a>
+  <span class="bc-sep">›</span>
+  <span class="bc">{{ action }} Book</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">{{ '➕' if action=='Add' else '✏️' }} {{ action }} Book</h2>
+      <p class="page-sub">{{ 'Add a new book to the library collection' if action=='Add' else 'Update book details' }}</p>
+    </div>
+    <a href="{{ url_for('admin_books') }}" class="btn-outline">← Back to Books</a>
+  </div>
+
+  <div class="form-layout">
+    <!-- Cover preview -->
+    <div class="cover-preview-panel">
+      <div class="cover-preview" id="coverPreview">
+        {% if book and book.cover_url %}
+          <img id="coverImg" src="{{ book.cover_url }}" alt="Cover"/>
+        {% else %}
+          <div class="cover-placeholder" id="coverPlaceholder">
+            <span>📖</span>
+            <p>Cover will appear here</p>
+          </div>
+          <img id="coverImg" src="" alt="Cover" style="display:none"/>
+        {% endif %}
+      </div>
+      <button type="button" class="btn-outline btn-sm mt-2" onclick="fetchCover()">
+        🔄 Auto-fetch Cover
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form method="POST" class="book-form" id="bookForm">
+      <div class="form-grid-2">
+        <div class="field col-span-2">
+          <label>📗 Book Title *</label>
+          <input type="text" name="title" id="titleInput"
+                 value="{{ book.title if book else '' }}" placeholder="e.g. The Alchemist" required/>
+        </div>
+        <div class="field">
+          <label>✍️ Author *</label>
+          <input type="text" name="author" id="authorInput"
+                 value="{{ book.author if book else '' }}" placeholder="e.g. Paulo Coelho" required/>
+        </div>
+        <div class="field">
+          <label>🔖 ISBN</label>
+          <input type="text" name="isbn" value="{{ book.isbn if book else '' }}" placeholder="978-0-06-112008-4"/>
+        </div>
+        <div class="field">
+          <label>🏷️ Category</label>
+          <select name="category">
+            <option value="">Select…</option>
+            {% for c in ['Fiction','Non-Fiction','Science','History','Technology','Biography','Mathematics','Philosophy','Psychology','Self-Help','General'] %}
+            <option value="{{ c }}" {% if book and book.category==c %}selected{% endif %}>{{ c }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>🏢 Publisher</label>
+          <input type="text" name="publisher" value="{{ book.publisher if book else '' }}" placeholder="HarperCollins"/>
+        </div>
+        <div class="field">
+          <label>📅 Publication Year</label>
+          <input type="number" name="year" value="{{ book.year if book else '' }}" placeholder="2023" min="1800" max="2025"/>
+        </div>
+        <div class="field">
+          <label>📦 Total Copies</label>
+          <input type="number" name="total_copies" value="{{ book.total_copies if book else 1 }}" min="1" required/>
+        </div>
+        {% if action == 'Edit' %}
+        <div class="field">
+          <label>✅ Available Copies</label>
+          <input type="number" name="available" value="{{ book.available }}" min="0" max="{{ book.total_copies }}"/>
+        </div>
+        {% endif %}
+        <div class="field col-span-2">
+          <label>📝 Description</label>
+          <textarea name="description" rows="4" placeholder="Brief description of the book…">{{ book.description if book else '' }}</textarea>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('admin_books') }}" class="btn-outline">Cancel</a>
+        <button type="submit" class="btn-primary">
+          {{ '📥 Add Book' if action=='Add' else '💾 Save Changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function fetchCover(){
+  const title  = document.getElementById('titleInput').value.trim();
+  const author = document.getElementById('authorInput').value.trim();
+  if(!title){ alert('Enter a title first.'); return; }
+  const res  = await fetch(`/api/cover?title=${encodeURIComponent(title)}&author=${encodeURIComponent(author)}`);
+  const data = await res.json();
+  if(data.cover){
+    const img = document.getElementById('coverImg');
+    img.src = data.cover;
+    img.style.display = 'block';
+    document.getElementById('coverPlaceholder') && (document.getElementById('coverPlaceholder').style.display='none');
+  }
+}
+// Auto-trigger on blur of title
+document.getElementById('titleInput').addEventListener('blur', function(){
+  const img = document.getElementById('coverImg');
+  if(!img.src || img.style.display==='none') fetchCover();
+});
+</script>
+{% endblock %}

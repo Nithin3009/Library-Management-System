@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{% block title %}LibraryOS{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+{% if session.role %}
+<!-- ══ SIDEBAR ══════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <span class="sb-logo-icon">📖</span>
+    <span class="sb-logo-text">Library<em>OS</em></span>
+  </div>
+
+  <div class="sb-user">
+    <div class="sb-avatar">{{ session.name[0].upper() }}</div>
+    <div>
+      <div class="sb-uname">{{ session.name }}</div>
+      <div class="sb-role">{{ session.role|capitalize }}</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    {% if session.role == 'admin' %}
+      <a href="{{ url_for('admin_dashboard') }}" class="sb-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+        <span>🏠</span> Dashboard
+      </a>
+      <a href="{{ url_for('admin_books') }}" class="sb-link {% if 'books' in request.endpoint %}active{% endif %}">
+        <span>📚</span> Books
+      </a>
+      <a href="{{ url_for('admin_issued') }}" class="sb-link {% if request.endpoint == 'admin_issued' %}active{% endif %}">
+        <span>📤</span> Issued Books
+      </a>
+      <a href="{{ url_for('admin_students') }}" class="sb-link {% if 'student' in request.endpoint %}active{% endif %}">
+        <span>🎓</span> Students
+      </a>
+      <a href="{{ url_for('admin_add_book') }}" class="sb-link {% if request.endpoint == 'admin_add_book' %}active{% endif %}">
+        <span>➕</span> Add Book
+      </a>
+    {% else %}
+      <a href="{{ url_for('student_dashboard') }}" class="sb-link {% if request.endpoint == 'student_dashboard' %}active{% endif %}">
+        <span>🏠</span> Dashboard
+      </a>
+      <a href="{{ url_for('student_books') }}" class="sb-link {% if request.endpoint == 'student_books' %}active{% endif %}">
+        <span>🔍</span> Browse Books
+      </a>
+    {% endif %}
+  </nav>
+
+  <div class="sb-bottom">
+    <a href="{{ url_for('logout') }}" class="sb-logout">
+      <span>🚪</span> Logout
+    </a>
+  </div>
+</aside>
+
+<!-- Mobile hamburger -->
+<button class="hamburger" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+{% endif %}
+
+<!-- ══ MAIN CONTENT ════════════════════════════════════════ -->
+<div class="page-wrap {% if not session.role %}no-sidebar{% endif %}">
+
+  <!-- Top bar with breadcrumb & back button -->
+  {% if session.role %}
+  <div class="topbar">
+    <div class="topbar-left">
+      {% block breadcrumb %}{% endblock %}
+    </div>
+    <div class="topbar-right">
+      {% if session.role == 'admin' %}
+        <a href="{{ url_for('admin_dashboard') }}" class="btn-back">← Dashboard</a>
+      {% else %}
+        <a href="{{ url_for('student_dashboard') }}" class="btn-back">← Dashboard</a>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Flash messages -->
+  {% with msgs = get_flashed_messages(with_categories=true) %}
+  {% if msgs %}
+    <div class="flash-area">
+    {% for cat, msg in msgs %}
+      <div class="flash flash-{{ cat }}">
+        <span>{{ '✅' if cat=='success' else '❌' }}</span> {{ msg }}
+        <button onclick="this.parentElement.remove()">×</button>
+      </div>
+    {% endfor %}
+    </div>
+  {% endif %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

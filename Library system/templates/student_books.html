@@ -1,0 +1,114 @@
+{% extends "base.html" %} {% block title %}Browse Books — LibraryOS{% endblock
+%} {% block breadcrumb %}
+<a href="{{ url_for('student_dashboard') }}" class="bc-link">Dashboard</a>
+<span class="bc-sep">›</span>
+<span class="bc">Browse Books</span>
+{% endblock %} {% block content %}
+<div class="page-content">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">📚 Browse Books</h2>
+      <p class="page-sub">Search and issue books from the library collection</p>
+    </div>
+  </div>
+
+  <!-- Search and Filter bar -->
+  <div class="filter-bar">
+    <form
+      action="{{ url_for('student_books') }}"
+      method="GET"
+      class="filter-form"
+    >
+      <div class="search-input-wrap">
+        <span class="si-icon">🔍</span>
+        <input
+          type="text"
+          name="q"
+          placeholder="Search by title, author, category"
+          value="{{ query }}"
+          class="search-input"
+        />
+        {% if query %}
+        <a href="{{ url_for('student_books') }}" class="clear-x">X</a>
+        {% endif %}
+      </div>
+      <select name="category" onchange="this.form.submit()" class="cat-select">
+        <option value="">All Categories</option>
+        {% for c in cats %} {% if c == selected_cat %}
+        <option value="{{ c }}" selected>{{ c }}</option>
+        {% else %}
+        <option value="{{ c }}">{{ c }}</option>
+        {% endif %} {% endfor %}
+      </select>
+      <button type="submit" class="btn-primary">Search</button>
+    </form>
+    <div class="filter-count">{{ books|length }} books found</div>
+  </div>
+
+  <!-- Book grid -->
+  {% if books %}
+  <div class="book-shelf">
+    {% for b in books %}
+    <div class="shelf-card {% if b.available == 0 %}unavail{% endif %}">
+      <div class="shelf-img-wrap">
+        <img
+          src="{{ b.cover_url or '' }}"
+          alt="{{ b.title }}"
+          class="shelf-img"
+          onerror="
+            this.onerror = null;
+            this.src = 'https://placehold.co/200x280/1a1e28/f59e0b?text=BK';
+          "
+        />
+        <div class="shelf-overlay">
+          <span class="shelf-cat">{{ b.category or 'General' }}</span>
+          {% if b.available > 0 %}
+          <span class="avail-badge">{{ b.available }} Available</span>
+          {% else %}
+          <span class="unavail-badge">Unavailable</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="shelf-body">
+        <h4 class="shelf-title">{{ b.title }}</h4>
+        <p class="shelf-author">{{ b.author }}</p>
+        {% if b.year %}
+        <p class="shelf-year">{{ b.year }}</p>
+        {% endif %}
+        <div class="shelf-footer">
+          {% if b.already_issued %}
+          <span class="btn-issued">Already Issued</span>
+          {% elif b.available > 0 %}
+          <a
+            href="{{ url_for('issue_book', book_id=b.id) }}"
+            class="btn-issue"
+            onclick="
+              return confirm('Issue this book? It will be due in 14 days.');
+            "
+          >
+            Issue
+          </a>
+          {% else %}
+          <span class="btn-na">Not Available</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="empty-box">
+    <span>🔍</span>
+    {% if query %}
+    <p>No books found for "{{ query }}".</p>
+    <a href="{{ url_for('student_books') }}" class="btn-primary btn-sm"
+      >Clear Search</a
+    >
+    {% else %}
+    <p>No books in the library yet.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

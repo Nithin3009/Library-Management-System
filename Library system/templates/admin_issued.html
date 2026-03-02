@@ -1,0 +1,137 @@
+{% extends "base.html" %} {% block title %}Issued Books — LibraryOS{% endblock
+%} {% block breadcrumb %}
+<a href="{{ url_for('admin_dashboard') }}" class="bc-link">Dashboard</a>
+<span class="bc-sep">›</span><span class="bc">Issued Books</span>
+{% endblock %} {% block content %}
+<div class="page-content">
+  <div class="page-header">
+    <div>
+      <h2 class="page-title">📤 Issued Books</h2>
+      <p class="page-sub">
+        {{ records|length }} books currently out — {{
+        records|selectattr('is_overdue')|list|length }} overdue
+      </p>
+    </div>
+  </div>
+
+  <!-- Summary chips -->
+  <div class="chips-row">
+    <div class="chip chip-blue">
+      📤 Total Issued: <strong>{{ records|length }}</strong>
+    </div>
+    <div class="chip chip-red">
+      ⚠️ Overdue:
+      <strong>{{ records|selectattr('is_overdue')|list|length }}</strong>
+    </div>
+    <div class="chip chip-amber">
+      💰 Total Fine:
+      <strong>₹{{ "%.2f"|format(records|sum(attribute='live_fine')) }}</strong>
+    </div>
+  </div>
+
+  {% if records %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Book</th>
+          <th>Student</th>
+          <th>Issue Date</th>
+          <th>Due Date</th>
+          <th>Days Left</th>
+          <th>Fine</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr class="{% if r.is_overdue %}row-overdue{% endif %}">
+          <td>{{ loop.index }}</td>
+          <td>
+            <div class="cell-book">
+              <img
+                src="{{ r.cover_url }}"
+                class="cell-cover"
+                onerror="
+                  this.src = 'https://placehold.co/32x48/1a1e28/f59e0b?text=BK'
+                "
+              />
+              <div>
+                <div class="cell-title">
+                  {{ r.title[:40] }}{% if r.title|length>40 %}…{% endif %}
+                </div>
+                <small class="text-muted">{{ r.category or '' }}</small>
+              </div>
+            </div>
+          </td>
+          <td>
+            <a
+              href="{{ url_for('admin_student_detail', sid=r.student_id) }}"
+              class="link-subtle"
+            >
+              {{ r.student_name }}
+            </a>
+            <br /><small class="text-muted">{{ r.roll_no }}</small>
+          </td>
+          <td>{{ r.issue_date.strftime('%d %b %Y') }}</td>
+          <td class="{% if r.is_overdue %}text-red fw-bold{% endif %}">
+            {{ r.due_date.strftime('%d %b %Y') }}
+          </td>
+          <td>
+            {% if r.is_overdue %}
+            <span class="badge badge-red">{{ r.days_left|abs }}d late</span>
+            {% else %}
+            <span class="badge badge-green">{{ r.days_left }}d left</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if r.live_fine > 0 %}
+            <span class="text-red fw-bold"
+              >₹{{ "%.2f"|format(r.live_fine) }}</span
+            >
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.is_overdue %}
+            <span class="badge badge-red">Overdue</span>
+            {% else %}
+            <span class="badge badge-amber">Issued</span>
+            {% endif %}
+          </td>
+          <td>
+            <a
+              href="{{ url_for('admin_return_book', issue_id=r.id) }}"
+              class="tbl-act return-act"
+              data-title="{{ r.title }}"
+              data-fine="{{ r.live_fine }}"
+              onclick="return confirmAdminReturn(this);"
+            >
+              ↩ Return
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-box">
+    <span>🎉</span>
+    <p>No books currently issued — all books are available!</p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  function confirmAdminReturn(el) {
+    var title = el.getAttribute("data-title");
+    var fine = parseFloat(el.getAttribute("data-fine")) || 0;
+    var msg = 'Mark "' + title + '" as returned?';
+    if (fine > 0) msg += "\nLate fine: ₹" + fine.toFixed(2);
+    else msg += "\nNo fine.";
+    return confirm(msg);
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} — LibraryOS{% endblock %}
+
+{% block breadcrumb %}
+  <a href="{{ url_for('admin_dashboard') }}" class="bc-link">Dashboard</a>
+  <span class="bc-sep">›</span>
+  <a href="{{ url_for('admin_students') }}" class="bc-link">Students</a>
+  <span class="bc-sep">›</span>
+  <span class="bc">{{ student.name }}</span>
+{% endblock %}
+
+{% block content %}
+<div class="page-content">
+
+  <a href="{{ url_for('admin_students') }}" class="btn-back-lg">← Back to Students</a>
+
+  <!-- Student profile card -->
+  <div class="profile-card">
+    <div class="profile-avatar">{{ student.name[0].upper() }}</div>
+    <div class="profile-info">
+      <h2>{{ student.name }}</h2>
+      <p class="profile-roll">{{ student.roll_no }}</p>
+      <div class="profile-meta">
+        <span>📚 {{ student.department or 'N/A' }}</span>
+        <span>📧 {{ student.email }}</span>
+        <span>📞 {{ student.phone or 'N/A' }}</span>
+        <span>📅 Joined: {{ student.joined_on.strftime('%d %b %Y') if student.joined_on else 'N/A' }}</span>
+      </div>
+    </div>
+    <div class="profile-stats">
+      <div class="ps-item">
+        <div class="ps-num">{{ issues|selectattr('status','equalto','issued')|list|length }}</div>
+        <div class="ps-lbl">Active Issues</div>
+      </div>
+      <div class="ps-item">
+        <div class="ps-num">{{ issues|selectattr('status','equalto','returned')|list|length }}</div>
+        <div class="ps-lbl">Returned</div>
+      </div>
+      <div class="ps-item {% if total_fine > 0 %}ps-danger{% endif %}">
+        <div class="ps-num">₹{{ "%.2f"|format(total_fine) }}</div>
+        <div class="ps-lbl">Total Fines</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- All issue records -->
+  <section class="section">
+    <div class="sec-header">
+      <h3 class="sec-title">📋 Complete Issue History</h3>
+    </div>
+    {% if issues %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr><th>#</th><th>Book</th><th>Issue Date</th><th>Due Date</th>
+              <th>Return Date</th><th>Fine</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {% for r in issues %}
+          <tr class="{% if r.is_overdue %}row-overdue{% endif %}">
+            <td>{{ loop.index }}</td>
+            <td>
+              <div class="cell-book">
+                <img src="{{ r.cover_url }}" class="cell-cover"
+                     onerror="this.src='https://placehold.co/32x48/1a1e28/f59e0b?text=BK'"/>
+                <div class="cell-title">{{ r.title }}</div>
+              </div>
+            </td>
+            <td>{{ r.issue_date.strftime('%d %b %Y') }}</td>
+            <td class="{% if r.is_overdue %}text-red{% endif %}">
+              {{ r.due_date.strftime('%d %b %Y') }}
+            </td>
+            <td>{{ r.return_date.strftime('%d %b %Y') if r.return_date else '—' }}</td>
+            <td>
+              {% set fine = r.live_fine if r.status=='issued' else r.fine %}
+              {% if fine and fine > 0 %}
+                <span class="text-red">₹{{ "%.2f"|format(fine) }}</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>
+              {% if r.status == 'returned' %}
+                <span class="badge badge-green">Returned</span>
+              {% elif r.is_overdue %}
+                <span class="badge badge-red">Overdue</span>
+              {% else %}
+                <span class="badge badge-amber">Issued</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-box"><span>📂</span><p>No issue records for this student.</p></div>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}
