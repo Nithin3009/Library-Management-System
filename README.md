@@ -111,7 +111,7 @@ Open in browser:
 http://127.0.0.1:5000/
 🔐 Default Admin Credentials
 Email: admin@library.com
-Password: ********
+Password:admin123
 
 ⚠️ Change password after first login for security.
 
